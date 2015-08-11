@@ -86,7 +86,15 @@ setup(
     ],
     author='pjdecoursey@spscommerce.com',
     author_email='webapps@spscommerce.com',
-    install_requires=["redis"],
+    setup_requires=[
+        'nose==1.3.7'
+    ],
+    install_requires=["redis==2.10.3"],
+    tests_require=[
+        "mock==1.0.1",
+        "PyHamcrest==1.8.5",
+        "fakeredis==0.6.2",
+    ],
     entry_points={
         'console_scripts': [
             'redlock = redlock.cli:main',
