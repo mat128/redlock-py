@@ -1,3 +1,4 @@
+import threading
 from time import sleep
 import unittest
 import fakeredis
@@ -97,6 +98,23 @@ class RedlockTest(unittest.TestCase):
         for server in self.redlock.servers:
             self.assertEqual(server.get('pants'), lock_A.key)
 
+    def test_two_at_the_same_time_only_one_gets_it(self):
+        threads = []
+        threads_that_got_the_lock = []
+
+        def get_lock_and_register(thread_name, redlock, resource, output):
+            if redlock.lock(resource, 10000):
+                output.append(thread_name)
+
+        for i in range(2):
+            thread = threading.Thread(target=get_lock_and_register, args=(i, self.redlock, 'pants', threads_that_got_the_lock))
+            thread.start()
+            threads.append(thread)
+
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(threads_that_got_the_lock), 1)
 
 def get_servers_pool(active, inactive):
     redis_servers = []
