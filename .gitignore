@@ -6,3 +6,6 @@ __pycache__
 .tox
 .flooignore
 *.egg
+.idea
+*.pyc
+*.iml
