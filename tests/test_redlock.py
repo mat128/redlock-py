@@ -57,14 +57,19 @@ class RedlockTest(unittest.TestCase):
         self.assertIsInstance(lock, Lock)
 
     def test_safety_property_mutual_exclusion(self):
-        """At any given moment, only one client can hold a lock."""
-        lock = self.redlock.lock("pants", 1000)
+        """
+            At any given moment, only one client can hold a lock.
+        """
+        lock = self.redlock.lock("pants", 100000)
         self.assertIsInstance(lock, Lock)
         bad = self.redlock.lock("pants", 10)
         self.assertFalse(bad)
 
     def test_liveness_property_A_deadlocks_free(self):
-        """Eventually it is always possible to acquire a lock, even if the client that locked a resource crashed or gets partitioned."""
+        """
+            Eventually it is always possible to acquire a lock,
+            even if the client that locked a resource crashed or gets partitioned.
+        """
         lock_A = self.redlock_with_51_servers_up_49_down.lock("pants", 500)
         self.assertIsInstance(lock_A, Lock)
         sleep(1)
@@ -72,7 +77,9 @@ class RedlockTest(unittest.TestCase):
         self.assertIsInstance(lock_B, Lock)
 
     def test_liveness_property_B_fault_tolerance(self):
-        """As long as the majority of Redis nodes are up, clients are able to acquire and release locks."""
+        """
+            As long as the majority of Redis nodes are up, clients are able to acquire and release locks.
+        """
         lock_with_majority = self.redlock_with_51_servers_up_49_down.lock("pants", 100000)
         self.assertIsInstance(lock_with_majority, Lock)
 
@@ -80,7 +87,10 @@ class RedlockTest(unittest.TestCase):
         self.assertEqual(lock_without_majority, False)
 
     def test_locks_are_released_when_majority_is_not_reached(self):
-        """[...] clients that fail to acquire the majority of locks, to release the (partially) acquired locks ASAP [...]"""
+        """
+            [...] clients that fail to acquire the majority of locks,
+            to release the (partially) acquired locks ASAP [...]
+        """
         lock = self.redlock_with_50_servers_up_50_down.lock("pants", 10000)
         self.assertEqual(lock, False)
 
@@ -88,7 +98,9 @@ class RedlockTest(unittest.TestCase):
             self.assertEqual(server.get('pants'), None)
 
     def test_avoid_removing_locks_created_by_other_clients(self):
-        """[...] avoid removing a lock that was created by another client."""
+        """
+            [...] avoid removing a lock that was created by another client.
+        """
         lock_A = self.redlock.lock("pants", 100000)
         self.assertIsInstance(lock_A, Lock)
 
@@ -103,11 +115,14 @@ class RedlockTest(unittest.TestCase):
         threads_that_got_the_lock = []
 
         def get_lock_and_register(thread_name, redlock, resource, output):
-            if redlock.lock(resource, 10000):
+            lock = redlock.lock(resource, 10000)
+            if lock:
                 output.append(thread_name)
 
         for i in range(2):
-            thread = threading.Thread(target=get_lock_and_register, args=(i, self.redlock, 'pants', threads_that_got_the_lock))
+            thread = threading.Thread(
+                target=get_lock_and_register, args=(i, self.redlock, 'pants', threads_that_got_the_lock)
+            )
             thread.start()
             threads.append(thread)
 
@@ -115,6 +130,7 @@ class RedlockTest(unittest.TestCase):
             t.join()
 
         self.assertEqual(len(threads_that_got_the_lock), 1)
+
 
 def get_servers_pool(active, inactive):
     redis_servers = []

@@ -1,3 +1,5 @@
+import threading
+from time import sleep
 from mock import patch
 from redlock.fifo import RedlockFIFO
 import test_redlock
@@ -10,5 +12,34 @@ class RedlockFIFOTest(test_redlock.RedlockTest):
         self.redlock_with_51_servers_up_49_down = RedlockFIFO(test_redlock.get_servers_pool(active=51, inactive=49))
         self.redlock_with_50_servers_up_50_down = RedlockFIFO(test_redlock.get_servers_pool(active=50, inactive=50))
 
+
+    @patch('redis.StrictRedis', new=test_redlock.FakeRedisCustom)
     def test_calls_are_handled_in_order(self):
-        pass
+        threads_that_got_the_lock = []
+        threads = []
+        thread_names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+        def get_lock_and_register(thread_name, lock_source, resource_name, output, delay_before_releasing_lock):
+            print '%s - %s' % (threading.current_thread(), thread_name)
+            lock = lock_source.lock(resource_name, 10000)
+            if lock:
+                output.append(thread_name)
+                sleep(delay_before_releasing_lock)
+                lock_source.unlock(lock)
+
+        for t in thread_names:
+            connector = RedlockFIFO(test_redlock.get_servers_pool(active=1, inactive=0))
+
+            simulate_work_delay = 0.1
+            thread = threading.Thread(
+                target=get_lock_and_register,
+                args=(t, connector, 'pants', threads_that_got_the_lock, simulate_work_delay)
+            )
+            sleep(0.2)
+            thread.start()
+            threads.append(thread)
+
+        for t in threads:
+            t.join()
+
+        self.assertEqual(''.join(threads_that_got_the_lock), thread_names)
