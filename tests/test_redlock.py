@@ -79,12 +79,23 @@ class RedlockTest(unittest.TestCase):
         self.assertEqual(lock_without_majority, False)
 
     def test_locks_are_released_when_majority_is_not_reached(self):
-        """It is worth stressing how important it is for clients that fail to acquire the majority of locks, to release the (partially) acquired locks ASAP [...]"""
+        """[...] clients that fail to acquire the majority of locks, to release the (partially) acquired locks ASAP [...]"""
         lock = self.redlock_with_50_servers_up_50_down.lock("pants", 10000)
         self.assertEqual(lock, False)
 
         for server in self.redlock_with_50_servers_up_50_down.servers:
             self.assertEqual(server.get('pants'), None)
+
+    def test_avoid_removing_locks_created_by_other_clients(self):
+        """[...] avoid removing a lock that was created by another client."""
+        lock_A = self.redlock.lock("pants", 100000)
+        self.assertIsInstance(lock_A, Lock)
+
+        lock_B = Lock(validity=9000, resource='pants', key='abcde')
+        self.redlock.unlock(lock_B)
+
+        for server in self.redlock.servers:
+            self.assertEqual(server.get('pants'), lock_A.key)
 
 
 def get_servers_pool(active, inactive):
