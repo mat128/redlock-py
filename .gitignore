@@ -3,3 +3,6 @@
 redlock_py.egg-info
 dist
 __pycache__
+.tox
+.flooignore
+*.egg
