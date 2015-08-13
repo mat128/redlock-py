@@ -67,7 +67,7 @@ THE SOFTWARE.
 
 setup(
     name='redlock-py',
-    version='1.0.5',
+    version='2.0.0',
     packages=find_packages(),
     include_package_data=True,
     description='Redis locking mechanism',
