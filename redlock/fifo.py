@@ -1,13 +1,12 @@
 import threading
+from time import sleep
 from redlock import Redlock
 
 
 class RedlockFIFO(Redlock):
+    pass
 
-    def __init__(
-            self, connection_list, retry_count=None, retry_delay=None,
-            fifo_retry_count=10, fifo_retry_delay=0.2, fifo_queue_length=32
-    ):
+    def __init__(self, connection_list, retry_count=None, retry_delay=None, fifo_retry_count=30, fifo_retry_delay=0.5, fifo_queue_length=64):
         super(RedlockFIFO, self).__init__(connection_list, retry_count, retry_delay)
         self.fifo_retry_count = fifo_retry_count
         self.fifo_retry_delay = fifo_retry_delay
@@ -31,7 +30,6 @@ class RedlockFIFO(Redlock):
                 next_position = self.fifo_queue_length
 
             next_lock = super(RedlockFIFO, self).lock(get_resource_name_with_position(resource, next_position), ttl)
-            print '%s - Tried pos %s, got %s' % (threading.current_thread(), next_position, next_lock)
 
             if next_lock:
                 if lock is not None:
@@ -40,6 +38,7 @@ class RedlockFIFO(Redlock):
                 lock = next_lock
             else:
                 retries += 1
+                sleep(self.fifo_retry_delay)
 
         if current_position == 0:
             return lock

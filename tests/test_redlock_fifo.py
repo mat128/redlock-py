@@ -1,6 +1,8 @@
+import random
 import threading
 from time import sleep
 from mock import patch
+import redlock
 from redlock.fifo import RedlockFIFO
 import test_redlock
 
@@ -27,15 +29,13 @@ class RedlockFIFOTest(test_redlock.RedlockTest):
                 sleep(delay_before_releasing_lock)
                 lock_source.unlock(lock)
 
-        for t in thread_names:
+        for t in thread_names: #
             connector = RedlockFIFO(test_redlock.get_servers_pool(active=1, inactive=0))
 
-            simulate_work_delay = 0.1
-            thread = threading.Thread(
-                target=get_lock_and_register,
-                args=(t, connector, 'pants', threads_that_got_the_lock, simulate_work_delay)
-            )
-            sleep(0.2)
+            simulate_work_delay = 0.01
+            thread = threading.Thread(target=get_lock_and_register, args=(t, connector, 'pants', threads_that_got_the_lock,
+                                                                          simulate_work_delay))
+            sleep(0.01)
             thread.start()
             threads.append(thread)
 
