@@ -14,7 +14,6 @@ class RedlockFIFOTest(test_redlock.RedlockTest):
         self.redlock_with_51_servers_up_49_down = RedlockFIFO(test_redlock.get_servers_pool(active=51, inactive=49))
         self.redlock_with_50_servers_up_50_down = RedlockFIFO(test_redlock.get_servers_pool(active=50, inactive=50))
 
-
     @patch('redis.StrictRedis', new=test_redlock.FakeRedisCustom)
     def test_calls_are_handled_in_order(self):
         threads_that_got_the_lock = []
@@ -29,7 +28,7 @@ class RedlockFIFOTest(test_redlock.RedlockTest):
                 sleep(delay_before_releasing_lock)
                 lock_source.unlock(lock)
 
-        for t in thread_names: #
+        for t in thread_names:
             connector = RedlockFIFO(test_redlock.get_servers_pool(active=1, inactive=0))
 
             simulate_work_delay = 0.01

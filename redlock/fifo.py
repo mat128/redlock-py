@@ -1,12 +1,9 @@
-import threading
 from time import sleep
 from redlock import Redlock
 
 
 class RedlockFIFO(Redlock):
-    pass
-
-    def __init__(self, connection_list, retry_count=None, retry_delay=None, fifo_retry_count=30, fifo_retry_delay=0.5, fifo_queue_length=64):
+    def __init__(self, connection_list, retry_count=1, retry_delay=0.2, fifo_retry_count=30, fifo_retry_delay=0.2, fifo_queue_length=64):
         super(RedlockFIFO, self).__init__(connection_list, retry_count, retry_delay)
         self.fifo_retry_count = fifo_retry_count
         self.fifo_retry_delay = fifo_retry_delay

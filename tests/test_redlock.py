@@ -115,7 +115,7 @@ class RedlockTest(unittest.TestCase):
         threads_that_got_the_lock = []
 
         def get_lock_and_register(thread_name, redlock, resource, output):
-            lock = redlock.lock(resource, 10000)
+            lock = redlock.lock(resource, 100000)
             if lock:
                 output.append(thread_name)
 
