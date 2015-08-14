@@ -66,13 +66,13 @@ THE SOFTWARE.
 """
 
 setup(
-    name='redlockfifo-test',
-    version='2.0.1',
+    name='redlockfifo',
+    version='0.0.1',
     packages=find_packages(),
     include_package_data=True,
     description='Redis locking mechanism',
     long_description=README,
-    url='https://github.com/SPSCommerce/identity-service',
+    url='https://github.com/mat128/redlock-py',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',

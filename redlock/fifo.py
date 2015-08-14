@@ -25,7 +25,7 @@ class RedlockFIFO(Redlock):
         lock = None
         retries = 0
 
-        while current_position is not 0 and retries <= self.fifo_retry_count:
+        while current_position is not 0 and retries < self.fifo_retry_count:
             if current_position is not None:
                 next_position = current_position - 1
             else:
@@ -49,4 +49,8 @@ class RedlockFIFO(Redlock):
         if current_position == 0:
             return lock
         else:
+            self.logger.debug('Could not get lock on {resource} (position 0) after {tries} tries.'.format(resource=resource, tries=retries))
+            if lock is not None:
+                self.logger.debug('Releasing previous lock: {lock}'.format(lock=str(lock)))
+                super(RedlockFIFO, self).unlock(lock)
             return False
