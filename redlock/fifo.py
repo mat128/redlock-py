@@ -1,3 +1,5 @@
+import logging
+
 from time import sleep
 from redlock import Redlock
 
@@ -8,8 +10,11 @@ class RedlockFIFO(Redlock):
         self.fifo_retry_count = fifo_retry_count
         self.fifo_retry_delay = fifo_retry_delay
         self.fifo_queue_length = fifo_queue_length
+        self.logger = logging.getLogger(__name__)
 
     def lock(self, resource, ttl):
+        self.logger.debug('Locking resource {resource} with ttl {ttl}'.format(resource=resource, ttl=ttl))
+
         def get_resource_name_with_position(resource, position):
             if position == 0:
                 return resource
@@ -26,10 +31,14 @@ class RedlockFIFO(Redlock):
             else:
                 next_position = self.fifo_queue_length
 
+            self.logger.debug('Trying to acquire resource {resource} position {pos}, try #{retry}'.format(resource=resource, pos=next_position, retry=retries))
             next_lock = super(RedlockFIFO, self).lock(get_resource_name_with_position(resource, next_position), ttl)
 
             if next_lock:
+                retries = 0
+                self.logger.debug('Resource {resource} position {pos} acquired.'.format(resource=resource, pos=next_position))
                 if lock is not None:
+                    self.logger.debug('Releasing previous lock: {lock}'.format(lock=str(lock)))
                     super(RedlockFIFO, self).unlock(lock)
                 current_position = next_position
                 lock = next_lock
