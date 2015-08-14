@@ -33,6 +33,13 @@ class Redlock(object):
         return 0
     end"""
 
+    extend_script = """
+    if redis.call("get",KEYS[1]) == ARGV[1] then
+        return redis.call("expire",KEYS[1],ARGV[2])
+    else
+        return 0
+    end"""
+
     def __init__(self, connection_list, retry_count=None, retry_delay=None):
         self.servers = []
         for connection_info in connection_list:
@@ -64,24 +71,33 @@ class Redlock(object):
         except:
             pass
 
+    def extend_instance(self, server, resource, val, new_ttl):
+        try:
+            return server.eval(self.extend_script, 1, resource, val, new_ttl)
+        except:
+            return False
+
     def get_unique_id(self):
         CHARACTERS = string.ascii_letters + string.digits
         return ''.join(random.choice(CHARACTERS) for _ in range(22))
 
     def lock(self, resource, ttl):
-        retry = 0
-        val = self.get_unique_id()
+        return self.act_on_majority_or_unlock(self.lock_instance, resource, self.get_unique_id(), ttl)
 
+    def extend(self, lock, new_ttl):
+        return self.act_on_majority_or_unlock(self.extend_instance, lock.resource, lock.key, new_ttl)
+
+    def act_on_majority_or_unlock(self, action, resource, val, ttl):
+        retry = 0
         # Add 2 milliseconds to the drift to account for Redis expires
         # precision, which is 1 millisecond, plus 1 millisecond min
         # drift for small TTLs.
         drift = int(ttl * self.clock_drift_factor) + 2
-
         while retry < self.retry_count:
             n = 0
             start_time = int(time.time() * 1000)
             for server in self.servers:
-                if self.lock_instance(server, resource, val, ttl):
+                if action(server, resource, val, ttl):
                     n += 1
             elapsed_time = int(time.time() * 1000) - start_time
             validity = int(ttl - elapsed_time - drift)

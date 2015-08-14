@@ -32,6 +32,9 @@ class FakeRedisCustom(FakeRedis):
                 return self.delete(args[0])
             else:
                 return 0
+        elif script == Redlock.extend_script:
+            if self.get(args[0]) == args[1]:
+                return self.expire(args[0], args[2])
 
 
 class RedlockTest(unittest.TestCase):
@@ -130,6 +133,13 @@ class RedlockTest(unittest.TestCase):
             t.join()
 
         self.assertEqual(len(threads_that_got_the_lock), 1)
+
+    def test_a_lock_can_be_extended(self):
+        lock = self.redlock.lock("pants", 500)
+        self.redlock.extend(lock, 1000)
+        sleep(0.6)
+        for server in self.redlock.servers:
+            self.assertEqual(server.get('pants'), lock.key)
 
 
 def get_servers_pool(active, inactive):
