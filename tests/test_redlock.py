@@ -34,7 +34,10 @@ class FakeRedisCustom(FakeRedis):
                 return 0
         elif script == Redlock.extend_script:
             if self.get(args[0]) == args[1]:
-                return self.expire(args[0], args[2])
+                return self.pexpire(args[0], args[2])
+
+    def pexpire(self, name, time):
+        return super(FakeRedisCustom, self).expire(name, float(time)/1000)
 
 
 class RedlockTest(unittest.TestCase):
